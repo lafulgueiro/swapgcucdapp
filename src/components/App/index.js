@@ -7,7 +7,7 @@ import Swal from 'sweetalert2';
 import './App.scss';
 
 const FOUNDATION_ADDRESS = 'TWiWt5SEDzaEqS6kE5gandWMNfxR2B5xzg';
-
+const WGCUC= 'TNGCtZWUSrU2Q65sPJTrntgkQouV9bp9qf'
 class App extends React.Component {
 
     constructor(props) {
@@ -15,6 +15,8 @@ class App extends React.Component {
         this.state = {
             balance: 0,
             getbalanceaddress: '',
+            depositamount:'',
+            withdrawamount:'',
             transferaddress: '',
             transferamount: '',
             contractAddress:'',
@@ -38,6 +40,8 @@ class App extends React.Component {
               },
             }
         this.updateGetBalanceInputValue = this.updateGetBalanceInputValue.bind(this)
+        this.updateDepositAmountInputValue = this.updateDepositAmountInputValue.bind(this)
+        this.updatewithdrawAmountInputValue = this.updatewithdrawAmountInputValue.bind(this)
         this.updateTransferInputValue = this.updateTransferInputValue.bind(this)
         this.updateTransferAmountInputValue = this.updateTransferAmountInputValue.bind(this)
         this.updateContractAddressInput = this.updateContractAddressInput.bind(this)
@@ -128,8 +132,16 @@ class App extends React.Component {
                 });
             });
         }
-
-
+        await Utils.setTronWeb(window.tronWeb, WGCUC);
+            //const tmp_name = await Utils.contract.name().call();
+            const tmp_tronwebaddress = Utils.tronWeb.address.fromHex((((await Utils.tronWeb.trx.getAccount()).address).toString()));
+            await this.setState({
+              tokenname : await Utils.contract.name().call(),
+              tokensymbol : await Utils.contract.symbol().call(),
+              totalSupply : ((await Utils.contract.totalSupply().call()).toNumber())/1000000,
+              tronwebaddress:tmp_tronwebaddress
+            });
+            this.getBalance(this.state.tronwebaddress)
         //await Utils.setTronWeb(window.tronWeb);
         //console.log(Utils.tronWeb.address.fromHex((((await Utils.tronWeb.trx.getAccount()).address).toString())));  /////// Get account address and info
        // console.log(await Utils.tronWeb.trx.getBalance());
@@ -156,7 +168,7 @@ class App extends React.Component {
 
     /////////////////////////////////////// GET BALANCE /////////////////////////////////
     async getBalance(_getbalanceaddress){
-        const balance = ((await Utils.contract.balanceOf(_getbalanceaddress).call()).toNumber())/100000000;
+        const balance = ((await Utils.contract.balanceOf(_getbalanceaddress).call()).toNumber())/1000000;
         //const balance = await Utils.contract.decimals().call();
         console.log('balance', balance);
 
@@ -170,6 +182,61 @@ class App extends React.Component {
             });
     }
     /////////////////////////////////////// GET BALANCE END /////////////////////////////////
+
+    //////////////////////////////Deposit ////////////////
+    deposit(_amount){
+
+        Utils.contract.deposit().send({
+            tokenId:1003576,
+            tokenValue:_amount,
+            shouldPollResponse: true,
+            callValue: 0
+        }).then(res => Swal({
+            title:'Swap Successful',
+            type: 'success'
+        })).catch(err => Swal({
+            title:'Swap Failed',
+            type: 'error'
+
+        }));
+
+    }
+    updateDepositAmountInputValue (evt) {
+        console.log('depositamount : ', this.state.depositamount);
+            this.setState({
+              depositamount: evt.target.value
+            });
+    }
+
+
+
+    ///////////////////////////// END DEPOSIT //////////////////////////
+/////////////////////////////////// withdraw /////////////////////////////
+withdraw(_amount){
+
+    Utils.contract.withdraw(_amount).send({
+        shouldPollResponse: true,
+        callValue: 0
+    }).then(res => Swal({
+        title:'withdraw Successful',
+        type: 'success'
+    })).catch(err => Swal({
+        title:'withdraw Failed',
+        type: 'error'
+
+    }));
+
+}
+
+
+
+updatewithdrawAmountInputValue (evt) {
+    console.log('withdrawamount : ', this.state.withdrawamount);
+        this.setState({
+            withdrawamount: evt.target.value
+        });
+}
+/////////////////////////////////// withdraw END /////////////////////////////
 
     /////////////////////////////////// TRANSFER /////////////////////////////
     Transfer(_to, _amount){
@@ -378,96 +445,46 @@ class App extends React.Component {
 
                   <h1 style={{color : 'white' }}>Tron TRC20 Token Management Platform</h1>
                   <hr style={{color: 'white', backgroundColor: 'white', height: 0.5}}/>
-                  <p> Your Address : {this.state.tronwebaddress} </p>
+                  
                   <br/>
                   <br/>
 
-
-
-
-
-
-
-
-
-                  <p> Paste your contract address here : </p>
-                  <input style={{ width:"400px" }} value={this.state.contractAddress} onChange={this.updateContractAddressInput}/>
-                  <br/>
-                  <p> Token name : {this.state.tokenname}</p>
+                 <p> Token name : {this.state.tokenname}</p>
                   <p> Token Symbol : {this.state.tokensymbol}</p>
                   <p> Total Supply : {this.state.totalSupply}</p>
                   <hr style={{color: 'white', backgroundColor: 'white', height: 0.5}}/>
-
-
-
-
-
-
-
-
-
-
                   <br/>
+                  
                   <br/>
-                  <input style={{ width:"400px" }} value={this.state.getbalanceaddress} onChange={this.updateGetBalanceInputValue}/>
-                  <br/>
-                  <br/>
-                  <button className='btn btn-primary' onClick={(event) => {
-                                                                       event.preventDefault()
-                                                                       this.getBalance(this.state.getbalanceaddress)
-                                                                     }  }>Get Balance
-                  </button>
-                  <br/>
-                  <br/>
+                  <p> Your Address : {this.state.tronwebaddress} </p>
                   <p>Your balance is : {this.state.balance}</p>
                   <br/>
-
-
-
-
-
-
-
-
-
-
-
                   <hr style={{color: 'white', backgroundColor: 'white', height: 0.5}}/>
                   <br/>
                   <p> To : </p>
-                  <input style={{ width:"400px" }} value={this.state.transferaddress} onChange={this.updateTransferInputValue}/>
+                  
                   <p> Amount : </p>
-                  <input style={{ width:"200px" }} value={this.state.transferamount} onChange={this.updateTransferAmountInputValue}/>
+                  <input style={{ width:"200px" }} value={this.state.depositamount} onChange={this.updateDepositAmountInputValue}/>
                   <br/>
                   <br/>
                   <button className='btn btn-primary' onClick={(event) => {
                                                                        event.preventDefault()
-                                                                       this.Transfer(this.state.transferaddress, this.state.transferamount*100000000)
-                                                                     }  }>Transfer
+                                                                       this.deposit( this.state.depositamount*1000000)
+                                                                     }  }>Deposit
                   </button>
                   <br/>
-
-
-
-
-
-
-
-
                   <hr style={{color: 'white', backgroundColor: 'white', height: 0.5}}/>
                   <br/>
-                  <p> From : </p>
-                  <input style={{ width:"400px" }} value={this.state.transferfromfromaddress} onChange={this.updateTansferFromFromInputValue}/>
                   <p> To : </p>
-                  <input style={{ width:"400px" }} value={this.state.transferfromtoaddress} onChange={this.updateTansferFromToInputValue}/>
+                  
                   <p> Amount : </p>
-                  <input style={{ width:"200px" }} value={this.state.transferfromamount} onChange={this.updateTansferFromAmountInputValue}/>
+                  <input style={{ width:"200px" }} value={this.state.withdrawamount} onChange={this.updatewithdrawAmountInputValue}/>
                   <br/>
                   <br/>
                   <button className='btn btn-primary' onClick={(event) => {
                                                                        event.preventDefault()
-                                                                       this.TransferFrom(this.state.transferfromfromaddress, this.state.transferfromtoaddress, this.state.transferfromamount*100000000)
-                                                                     }  }>Transfer From
+                                                                       this.withdraw( this.state.withdrawamount*1000000)
+                                                                     }  }>Withdraw
                   </button>
                   <br/>
 
@@ -480,78 +497,7 @@ class App extends React.Component {
 
 
 
-
-                  <hr style={{color: 'white', backgroundColor: 'white', height: 0.5}}/>
-                  <br/>
-                  <p> Spender : </p>
-                  <input style={{ width:"400px" }} value={this.state.approvespender} onChange={this.updateApproveSpender}/>
-                  <p> Amount : </p>
-                  <input style={{ width:"400px" }} value={this.state.approveamount} onChange={this.updateApproveValue}/>
-                  <br/>
-                  <br/>
-                  <button className='btn btn-primary' onClick={(event) => {
-                                                                       event.preventDefault()
-                                                                       this.Approve(this.state.approvespender, this.state.approveamount*100000000)
-                                                                     }  }>Approve
-                  </button>
-                  <br/>
-
-
-
-
-
-
-
-
-
-
-
-                  <br/>
-                  <hr style={{color: 'white', backgroundColor: 'white', height: 0.5}}/>
-                  <br/>
-                  <p> Amount to burn : </p>
-                  <input style={{ width:"200px" }} value={this.state.burnamount} onChange={this.updateBurnAmountInputValue}/>
-                  <br/>
-                  <br/>
-                  <button className='btn btn-primary' onClick={(event) => {
-                                                                       event.preventDefault()
-                                                                       this.Burn(this.state.burnamount*100000000)
-                                                                     }  }>Burn
-                  </button>
-                  <br/>
-                  <br/>
-
-
-
-
-
-
-
-
-
-
-                  <br/>
-                  <hr style={{color: 'white', backgroundColor: 'white', height: 0.5}}/>
-                  <br/>
-                  <p> From : </p>
-                  <input style={{ width:"200px" }} value={this.state.burnfromfrom} onChange={this.updateBurnFromFromValue}/>
-                  <p> Amount to burn : </p>
-                  <input style={{ width:"200px" }} value={this.state.burnfromamount} onChange={this.updateBurnFromAmountValue}/>
-
-                  <br/>
-                  <br/>
-                  <button className='btn btn-primary' onClick={(event) => {
-                                                                       event.preventDefault()
-                                                                       this.BurnFrom(this.state.burnfromfrom, this.state.burnfromamount*100000000)
-                                                                     }  }>Burn From
-                  </button>
-                  <br/>
-                  <br/>
-
-
-
-
-
+                  
 
 
 
@@ -566,4 +512,5 @@ class App extends React.Component {
 }
 
 export default App;
+
 
